@@ -22,6 +22,9 @@ if (isset($_GET['views'])) {
     <?php
 
     use app\controllers\ViewsController;
+    use app\controllers\loginController;
+
+    $insLogin = new loginController();
 
     $viewController = new ViewsController();
     $vista = $viewController->obtenerVistasControlador($url[0]);
@@ -29,6 +32,10 @@ if (isset($_GET['views'])) {
     if ($vista == "login" || $vista == "404") {
         require_once "./app/views/content/" . $vista . "-view.php";
     } else {
+        if (!isset($_SESSION['id']) || !isset($_SESSION['nombre']) || !isset($_SESSION['usuario']) || $_SESSION['id'] == "" || $_SESSION['nombre'] == "" || $_SESSION['usuario'] == "") {
+            $insLogin->cerrarSesionControlador();
+            exit();
+        }
         require_once "./app/views/inc/navbar.php";
         require_once $vista;
     }

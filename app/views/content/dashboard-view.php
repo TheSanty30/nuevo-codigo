@@ -1,5 +1,5 @@
 <div id="layoutSidenav">
-    <?php require_once "./app/views/inc/sidebar.php"; ?>
+    <?php include "./app/views/inc/sidebar.php"; ?>
     <div id="layoutSidenav_content">
         <main>
             <div class="row justify-content-center mt-5">
@@ -16,6 +16,6 @@
                 </div>
             </div>
         </main>
-        <?php require_once "./app/views/inc/footer.php"; ?>
+        <?php include "./app/views/inc/footer.php"; ?>
     </div>
 </div>

@@ -15,7 +15,7 @@ class mainModel
     private $user = DB_USER;
     private $pass = DB_PASS;
 
-    //Conectarse a la Base de Datos
+    /*----------  Funcion conectar a BD  ----------*/
     protected function conectar()
     {
         $conexion = new PDO("mysql:host=" . $this->server . ";dbname=" . $this->db, $this->user, $this->pass);
@@ -23,7 +23,7 @@ class mainModel
         return $conexion;
     }
 
-    //Ejecutar consultas en nuestro sistema
+    /*----------  Funcion ejecutar consultas  ----------*/
     protected function ejecutarConsulta($consulta)
     {
         $sql = $this->conectar()->prepare($consulta);
@@ -31,6 +31,7 @@ class mainModel
         return $sql;
     }
 
+    /*----------  Funcion limpiar cadenas  ----------*/
     public function limpiarCadena($cadena)
     {
         $palabras = ["<script>", "</script>", "<script src", "<script type=", "SELECT * FROM", "DELETE FROM", "INSERT INTO", "DROP TABLE", "DROP DATABASE", "TRUNCATE TABLE", "SHOW TABLES", "SHOW DATABASE", "<?PHP", "?>", "--", "^", "<", ">", "==", "=", ";", "::"];
@@ -47,7 +48,7 @@ class mainModel
         return $cadena;
     }
 
-    //String coincide con el filtro
+    /*---------- Funcion verificar datos (expresion regular) ----------*/
     protected function verificarDatos($filtro, $cadena)
     {
         if (preg_match("/^" . $filtro . "$/", $cadena)) {
@@ -57,6 +58,7 @@ class mainModel
         }
     }
 
+    /*----------  Funcion para ejecutar una consulta INSERT preparada  ----------*/
     protected function guardarDatos($tabla, $datos)
     {
         $query = "INSERT INTO $tabla (";
@@ -94,6 +96,7 @@ class mainModel
         return $sql;
     }
 
+    /*---------- Funcion seleccionar datos ----------*/
     public function seleccionarDatos($tipo, $tabla, $campo, $id)
     {
         $tipo = $this->limpiarCadena($tipo);
@@ -113,6 +116,7 @@ class mainModel
         return $sql;
     }
 
+    /*----------  Funcion para ejecutar una consulta UPDATE preparada  ----------*/
     protected function actualizarDatos($tabla, $datos, $condicion)
     {
         $query = "UPDATE $tabla SET ";
@@ -126,7 +130,7 @@ class mainModel
             $c++;
         }
 
-        $query .= "WHERE " . $condicion["condicion_campo"] . "=" . $condicion["condicion_marcador"];
+        $query .= " WHERE " . $condicion["condicion_campo"] . "=" . $condicion["condicion_marcador"];
 
         $sql = $this->conectar()->prepare($query);
 
@@ -137,6 +141,7 @@ class mainModel
         $sql->bindParam($condicion["condicion_marcador"], $clave["condicion_valor"]);
 
         $sql->execute();
+
 
         return $sql;
     }
@@ -154,20 +159,27 @@ class mainModel
 
     protected function paginadorTablas($pagina, $numeroPaginas, $url, $botones)
     {
-        $tabla = '<nav class="pagination is-centered is-rounded" role="navigation" aria-label="pagination">';
+        $tabla = '
+            <nav aria-label="Page navigation" class="d-flex justify-content-center">
+                <ul class="pagination">
+        ';
 
         if ($pagina <= 1) {
             $tabla .= '
-                <a class="pagination-previous is-disabled" disabled >Anterior</a>
-                <ul class="pagination-list">
-                ';
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true">Anterior</a>
+                </li>
+            ';
         } else {
             $tabla .= '
-                <a class="pagination-previous" href="' . $url . ($pagina - 1) . '">Anterior</a>
-                <ul class="pagination-list">
-                <li><a class="pagination-link" href="' . $url . '1/">1</a></li>
-                <li><span class="pagination-ellipsis">&hellip;</span></li>
-                ';
+                <li class="page-item">
+                    <a class="page-link" href="' . $url . ($pagina - 1) . '">Anterior</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="' . $url . '1/">1</a>
+                </li>
+                <li class="page-item"><span class="page-link">&hellip;</span></li>
+            ';
         }
 
         $ci = 0;
@@ -177,11 +189,15 @@ class mainModel
             }
             if ($pagina == $i) {
                 $tabla .= '
-                    <li><a class="pagination-link is-current" href="' . $url . $i . '/">' . $i . '</a></li>                
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="' . $url . $i . '/">' . $i . '</a>
+                    </li>               
                 ';
             } else {
                 $tabla .= '
-                    <li><a class="pagination-link" href="' . $url .  $i . '/">' . $i . '</a></li>
+                    <li class="page-item active">
+                        <a class="page-link" href="' . $url . $i . '/">' . $i . '</a>
+                    </li>
                 ';
             }
             $ci++;
@@ -189,19 +205,29 @@ class mainModel
 
         if ($pagina == $numeroPaginas) {
             $tabla .= '
-                    </ul>
-                    <a class="pagination-next is-disabled" disabled >Siguiente</a>
-                ';
+                <li class="page-item disabled">
+                    <a class="page-link" tabindex="-1" aria-disabled="true">Siguiente</a>
+                </li>
+            ';
         } else {
             $tabla .= '
-                    <li><span class="pagination-ellipsis">&hellip;</span></li>
-                    <li><a class="pagination-link" href="' . $url .  $numeroPaginas . '/">' . $numeroPaginas . '</a></li>
-                    </ul>
-                    <a class="pagination-previous" href="' . $url . ($pagina + 1) . '">Anterior</a>
-                ';
+                <li class="page-item"><span class="page-link">&hellip;</span></li>
+                <li class="page-item active">
+                    <a class="page-link" href="' . $numeroPaginas . '/">' . $numeroPaginas . '</a>
+                </li>
+                <li>
+                    <a class="pagination-link" href="' . $url .  $numeroPaginas . '/">' . $numeroPaginas . '</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="' . $url . ($pagina + 1) . '">Siguiente</a>
+                </li>
+            ';
         }
 
-        $tabla .= '</nav>';
+        $tabla .= '
+                </ul>
+            </nav>
+        ';
         return $tabla;
     }
 }

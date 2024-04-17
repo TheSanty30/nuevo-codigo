@@ -1,1 +1,3 @@
-cerrar cesion
+<?php
+
+$insLogin->cerrarSesionControlador();

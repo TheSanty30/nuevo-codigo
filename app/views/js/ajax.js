@@ -74,7 +74,11 @@ function alertas_ajax(alerta) {
             confirmButtonText: 'Aceptar'
         }).then((result) => {
             if (result.isConfirmed) {
-                document.querySelectorAll(".FormularioAjax").reset();
+                var form = document.querySelectorAll(".FormularioAjax");
+                formularios.forEach(function(formulario) {
+                    formulario.reset();
+                });
+                //document.querySelectorAll(".FormularioAjax").reset();
             }
         });
     }
@@ -82,3 +86,26 @@ function alertas_ajax(alerta) {
         window.location.href = alerta.url;
     }
 }
+
+/*let btn_exit = document.getElementById("btn_exit");
+
+btn_exit.addEventListener("click", function(e){
+    e.defaultPrevented();
+
+    Swal.fire({
+        title: "¿Quieres salir del sistema?",
+        text: "La sesión actual se cerrará",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Si, salir!",
+        cancelButtonText: "Cancelar!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+           let url = this.getAttribute("href");
+           window.location.href = url;
+        }
+    });
+
+});*/
