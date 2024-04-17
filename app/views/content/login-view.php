@@ -14,9 +14,39 @@
         </form>
     </div>
 </div>
+<script>
+    fetch('http://localhost/lev/login.controller.php?modulo_usuario=login&login_usuario=Sany')
+        .then((res) => {
+            return res.json();
+        })
+        .then((res) => {
+            console.log(res);
+            validateForm(res.resp)
+
+        })
+
+
+    function validateForm(resp) {
+        if (resp === 'vacio')
+            Swal.fire({
+                icon: 'error',
+                title: 'Ocurrió un error inesperado',
+                text: 'Usuario o clave incorrecto',
+                confirmButtonText: 'Aceptar'
+            })
+    }
+</script>
+
+
+
+
+
 
 <?php
+/*
 if (isset($_POST['login_usuario']) && isset($_POST["login_password"])) {
     $insLogin->iniciarSesionControlador();
 }
+print_r($_POST);
+*/
 ?>

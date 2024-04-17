@@ -389,7 +389,7 @@ class userController extends mainModel
             $alerta = [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
-                "text" => "No haz llenado los campos obligatorios",
+                "text" => "Es necesario ingresar tu Usuario y Contraseña logueada",
                 "icono" => "error"
             ];
             return json_encode($alerta);

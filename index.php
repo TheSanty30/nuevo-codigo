@@ -9,6 +9,15 @@ if (isset($_GET['views'])) {
 } else {
     $url = ['login'];
 }
+
+use app\controllers\ViewsController;
+use app\controllers\loginController;
+
+$insLogin = new loginController();
+
+$viewController = new ViewsController();
+$vista = $viewController->obtenerVistasControlador($url[0]);
+
 ?>
 
 <!DOCTYPE html>
@@ -21,13 +30,7 @@ if (isset($_GET['views'])) {
 <body>
     <?php
 
-    use app\controllers\ViewsController;
-    use app\controllers\loginController;
 
-    $insLogin = new loginController();
-
-    $viewController = new ViewsController();
-    $vista = $viewController->obtenerVistasControlador($url[0]);
 
     if ($vista == "login" || $vista == "404") {
         require_once "./app/views/content/" . $vista . "-view.php";
