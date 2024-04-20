@@ -1,23 +1,15 @@
 <?php
 require_once "./config/app.php";
 require_once "./autoload.php";
-require_once "./app/views/inc/session_start.php";
 
+/*---------- Iniciando sesion ----------*/
+require_once "./app/views/inc/session_start.php";
 
 if (isset($_GET['views'])) {
     $url = explode("/", $_GET['views']);
 } else {
     $url = ['login'];
 }
-
-use app\controllers\ViewsController;
-use app\controllers\loginController;
-
-$insLogin = new loginController();
-
-$viewController = new ViewsController();
-$vista = $viewController->obtenerVistasControlador($url[0]);
-
 ?>
 
 <!DOCTYPE html>
@@ -30,11 +22,18 @@ $vista = $viewController->obtenerVistasControlador($url[0]);
 <body>
     <?php
 
+    use app\controllers\ViewsController;
+    use app\controllers\loginController;
 
+    $insLogin = new loginController();
+
+    $viewController = new ViewsController();
+    $vista = $viewController->obtenerVistasControlador($url[0]);
 
     if ($vista == "login" || $vista == "404") {
         require_once "./app/views/content/" . $vista . "-view.php";
     } else {
+        /*---------- Cerrando sesion ----------*/
         if (!isset($_SESSION['id']) || !isset($_SESSION['nombre']) || !isset($_SESSION['usuario']) || $_SESSION['id'] == "" || $_SESSION['nombre'] == "" || $_SESSION['usuario'] == "") {
             $insLogin->cerrarSesionControlador();
             exit();

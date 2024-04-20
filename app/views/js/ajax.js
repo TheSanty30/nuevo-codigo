@@ -4,23 +4,17 @@ formularios_ajax.forEach(formularios => {
 
     formularios.addEventListener("submit", function (e) {
         e.preventDefault();
-
         Swal.fire({
-            title: "¿Estás seguro?",
+            title: "¿Estas seguro?",
             text: "¡Quieres realizar la acción solicitada!",
             icon: "question",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
             confirmButtonText: "Si, realizar!",
-            cancelButtonText: "No, cancelar!"
-        }).then((result) => {
+            cancelButtonText: "Cancelar!"
+          }).then((result) => {
             if (result.isConfirmed) {
-                /*Swal.fire({
-                  title: "Deleted!",
-                  text: "Your file has been deleted.",
-                  icon: "success"
-                });*/
                 let data = new FormData(this);
                 let method = this.getAttribute("method");
                 let action = this.getAttribute("action");
@@ -47,43 +41,47 @@ formularios_ajax.forEach(formularios => {
 
 
 function alertas_ajax(alerta) {
-    if (alerta.tipo == "simple") {
-        Swal.fire({
-            icon: alerta.icono,
-            title: alerta.titulo,
-            text: alerta.text,
-            confirmButtonText: 'Aceptar'
-        });
-    } else if (alerta.tipo == "recargar") {
-        Swal.fire({
-            icon: alerta.icono,
-            title: alerta.titulo,
-            text: alerta.text,
-            confirmButtonText: 'Aceptar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                location.reload();
-            }
-        });
-    }
-    else if (alerta.tipo == "limpiar") {
-        Swal.fire({
-            icon: alerta.icono,
-            title: alerta.titulo,
-            text: alerta.text,
-            confirmButtonText: 'Aceptar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                var form = document.querySelectorAll(".FormularioAjax");
-                formularios.forEach(function(formulario) {
-                    formulario.reset();
-                });
-                //document.querySelectorAll(".FormularioAjax").reset();
-            }
-        });
-    }
-    else if(alert.tipo == "redireccionar"){
-        window.location.href = alerta.url;
+    switch (alerta.tipo) {
+        case "simple":
+            Swal.fire({
+                icon: alerta.icono,
+                title: alerta.titulo,
+                text: alerta.text,
+                confirmButtonText: 'Aceptar'
+            });
+            break;
+        case "recargar":
+            Swal.fire({
+                icon: alerta.icono,
+                title: alerta.titulo,
+                text: alerta.text,
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    location.reload();
+                }
+            });
+            break;
+        case "limpiar":
+            Swal.fire({
+                icon: alerta.icono,
+                title: alerta.titulo,
+                text: alerta.text,
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var formularios = document.querySelectorAll(".FormularioAjax");
+                    formularios.forEach(function (formulario) {
+                        formulario.reset();
+                    });
+                }
+            });
+            break;
+        case "redireccionar":
+            window.location.href = alerta.url;
+            break;
+        default:
+            console.error("Tipo de alerta no reconocido");
     }
 }
 

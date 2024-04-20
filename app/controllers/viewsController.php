@@ -6,6 +6,7 @@ use app\models\viewsModel;
 
 class ViewsController extends viewsModel
 {
+    /*---------- Controlador obtener vistas ----------*/
     public function obtenerVistasControlador($vista)
     {
         if ($vista != "") {

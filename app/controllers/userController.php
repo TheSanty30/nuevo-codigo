@@ -3,148 +3,115 @@
 namespace app\controllers;
 
 use app\models\mainModel;
-use app\models\viewsModel;
 
 class userController extends mainModel
 {
+
     /*----------  Controlador registrar usuario  ----------*/
     public function registrarUsuarioControlador()
     {
-        //Almacenado los datos
-        $nombre = $this->limpiarCadena($_POST['usuario_nombre']);
-        $apellido = $this->limpiarCadena($_POST['usuario_apellido']);
-        $usuario = $this->limpiarCadena($_POST['usuario_usuario']);
-        $email = $this->limpiarCadena($_POST['usuario_email']);
-        $clave1 = $this->limpiarCadena($_POST['usuario_clave_1']);
-        $clave2 = $this->limpiarCadena($_POST['usuario_clave_2']);
-
-        //Verificando campos obligatorios
-        if ($nombre == "" || $apellido == "" || $usuario == "" || $clave1 == "" || $clave2 == "") {
-            $alerta = [
+        $alertas = [
+            "campos_vacios" => [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
-                "text" => "Existen campos vacios",
+                "text" => "Existen campos vacíos",
                 "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        //Verificando integridad de los datos
-        if ($this->verificarDatos("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}", $nombre)) {
-            $alerta = [
+            ],
+            "email_existente" => [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
-                "text" => "El nombre no coincide con el formato solicitado",
+                "text" => "El correo ingresado ya se encuentra registrado",
                 "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($this->verificarDatos("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}", $apellido)) {
-            $alerta = [
+            ],
+            "email_invalido" => [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
-                "text" => "El apellido no coincide con el formato solicitado",
+                "text" => "Ha ingresado un email no valido",
                 "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $usuario)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "El usuario no coincide con el formato solicitado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $clave1) || $this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $clave2)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Las claves no coinciden con el formato solicitado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($email != "") {
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email ='$email'");
-                if ($check_email->rowCount() > 0) {
-                    $alerta = [
-                        "tipo" => "simple",
-                        "titulo" => "Ocurrió un error inesperado",
-                        "text" => "El correo ingresado ya se encuentra registrado",
-                        "icono" => "error"
-                    ];
-                    return json_encode($alerta);
-                    exit();
-                }
-            } else {
-                $alerta = [
-                    "tipo" => "simple",
-                    "titulo" => "Ocurrió un error inesperado",
-                    "text" => "Ha ingresado un email no valido",
-                    "icono" => "error"
-                ];
-                return json_encode($alerta);
-                exit();
-            }
-        }
-
-        if ($clave1 != $clave2) {
-            $alerta = [
+            ],
+            "claves_diferentes" => [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
                 "text" => "Las claves no coinciden",
                 "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        } else {
-            $clave = password_hash($clave1, PASSWORD_BCRYPT, ["cost" => 10]);
-        }
-
-        $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario ='$usuario'");
-        if ($check_usuario->rowCount() > 0) {
-            $alerta = [
+            ],
+            "usuario_existente" => [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
                 "text" => "El usuario ya esta en uso, cambie a uno diferente",
                 "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
+            ],
+            // Agrega más tipos de alertas según sea necesario
+        ];
+
+        // Verificar campos vacíos
+        $campos_obligatorios = ['usuario_nombre', 'usuario_apellido', 'usuario_usuario', 'usuario_clave_1', 'usuario_clave_2'];
+        foreach ($campos_obligatorios as $campo) {
+            if (empty($_POST[$campo])) {
+                return json_encode($alertas["campos_vacios"]);
+            }
         }
 
+        // Verificar datos
+        $verificaciones = [
+            "usuario_nombre" => ["mensaje" => "El nombre no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            "usuario_apellido" => ["mensaje" => "El apellido no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            "usuario_usuario" => ["mensaje" => "El usuario no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9]{4,20}"],
+            "usuario_clave_1" => ["mensaje" => "Las claves no coinciden con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"],
+            "usuario_clave_2" => ["mensaje" => "Las claves no coinciden con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"]
+        ];
+
+        foreach ($verificaciones as $campo => $info) {
+            if ($this->verificarDatos($info["patron"], $_POST[$campo])) {
+                return json_encode(["tipo" => "simple", "titulo" => "Ocurrió un error inesperado", "text" => $info["mensaje"], "icono" => "error"]);
+            }
+        }
+
+        // Verificar email
+        if (!empty($_POST['usuario_email'])) {
+            if (!filter_var($_POST['usuario_email'], FILTER_VALIDATE_EMAIL)) {
+                return json_encode($alertas["email_invalido"]);
+            }
+            $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email = '{$_POST['usuario_email']}'");
+            if ($check_email->rowCount() > 0) {
+                return json_encode($alertas["email_existente"]);
+            }
+        }
+
+        // Verificar claves
+        if ($_POST['usuario_clave_1'] != $_POST['usuario_clave_2']) {
+            return json_encode($alertas["claves_diferentes"]);
+        } else {
+            $clave = $_POST['usuario_clave_1'];
+        }
+
+        // Verificar usuario
+        $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario = '{$_POST['usuario_email']}'");
+        if ($check_usuario->rowCount() > 0) {
+            return json_encode($alertas["usuario_existente"]);
+        }
+
+        // Registrar usuario
         $usuario_datos_reg = [
             [
                 "campo_nombre" => "usuario_nombre",
                 "campo_marcador" => ":Nombre",
-                "campo_valor" => $nombre
+                "campo_valor" => $_POST['usuario_nombre']
             ],
             [
                 "campo_nombre" => "usuario_apellido",
                 "campo_marcador" => ":Apellido",
-                "campo_valor" => $apellido
+                "campo_valor" => $_POST['usuario_apellido']
             ],
             [
                 "campo_nombre" => "usuario_email",
                 "campo_marcador" => ":Email",
-                "campo_valor" => $email
+                "campo_valor" => $_POST['usuario_email']
             ],
             [
                 "campo_nombre" => "usuario_usuario",
                 "campo_marcador" => ":Usuario",
-                "campo_valor" => $usuario
+                "campo_valor" => $_POST['usuario_usuario']
             ],
             [
                 "campo_nombre" => "usuario_clave",
@@ -161,26 +128,18 @@ class userController extends mainModel
                 "campo_marcador" => ":Actualizado",
                 "campo_valor" => date("Y-m-d H:i:s")
             ]
+            // Agregar otros campos aquí...
         ];
 
         $registrar_usuario = $this->guardarDatos("usuario", $usuario_datos_reg);
+
         if ($registrar_usuario->rowCount() == 1) {
-            $alerta = [
-                "tipo" => "limpiar",
-                "titulo" => "Usuario Registrado",
-                "text" => "El usuario " . $nombre . " " . $apellido . " se registro con exito",
-                "icono" => "success"
-            ];
+            return json_encode(["tipo" => "limpiar", "titulo" => "Usuario Registrado", "text" => "El usuario se registró con éxito", "icono" => "success"]);
         } else {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "No se pudo registrar el usuario, por favor intentelo nuevamente",
-                "icono" => "error"
-            ];
+            return json_encode(["tipo" => "simple", "titulo" => "Ocurrió un error inesperado", "text" => "No se pudo registrar el usuario, por favor inténtelo nuevamente", "icono" => "error"]);
         }
-        return json_encode($alerta);
     }
+
 
     /*----------  Controlador listar usuario  ----------*/
     public function listarUsuariosControlador($pagina, $registros, $url, $busqueda)
@@ -298,6 +257,7 @@ class userController extends mainModel
         </div>
         ';
 
+        ### Paginacion ###
         if ($total >= 1 && $pagina <= $numeroPaginas) {
             $tabla .= '
                 <div class="container py-4">
@@ -327,6 +287,7 @@ class userController extends mainModel
             exit();
         }
 
+        # Verificando usuario #
         $datos = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_id ='$id'");
 
         if ($datos->rowCount() <= 0) {
@@ -365,19 +326,64 @@ class userController extends mainModel
     /*----------  Controlador actualizar usuario  ----------*/
     public function actualizarUsuarioControlador()
     {
+        $alertas = [
+            "campos_vacios" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "Existen campos vacíos",
+                "icono" => "error"
+            ],
+            "email_existente" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "El correo ingresado ya se encuentra registrado",
+                "icono" => "error"
+            ],
+            "email_invalido" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "Ha ingresado un email no valido",
+                "icono" => "error"
+            ],
+            "claves_diferentes" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "Las claves no coinciden",
+                "icono" => "error"
+            ],
+            "usuario_existente" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "El usuario ya esta en uso, cambie a uno diferente",
+                "icono" => "error"
+            ],
+            "session_invalido" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "Usuario o Password Administrador Incorrectos",
+                "icono" => "error"
+            ],
+            "no_session" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "Es necesario ingresar tu Usuario y Contraseña logueada",
+                "icono" => "error"
+            ],
+            "usuario_inexistente" => [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "text" => "No se encontró el usuario en el sistema",
+                "icono" => "error"
+            ],
+            // Agrega más tipos de alertas según sea necesario
+        ];
+
         $id = $this->limpiarCadena(($_POST['usuario_id']));
 
         $datos = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_id ='$id'");
 
         if ($datos->rowCount() <= 0) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "No podemos encontrado el usuario en el sistema",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
+            return json_encode($alertas["usuario_inexistente"]);
         } else {
             $datos = $datos->fetch();
         }
@@ -386,142 +392,54 @@ class userController extends mainModel
         $admin_password = $this->limpiarCadena(($_POST['administrador_clave']));
 
         if ($admin_usuario == "" || $admin_password == "") {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Es necesario ingresar tu Usuario y Contraseña logueada",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
+            return json_encode($alertas["no_session"]);
         }
 
-        if ($this->verificarDatos("[a-zA-Z0-9 ]{4,20}", $admin_usuario)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Su USUARIO no conicide con el formato seleccionado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
+        // Verificar datos
+        $verificaciones = [
+            "usuario_nombre" => ["mensaje" => "El nombre no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            "usuario_apellido" => ["mensaje" => "El apellido no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            "usuario_usuario" => ["mensaje" => "El usuario no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9]{4,20}"],
+            "administrador_usuario" => ["mensaje" => "Su USUARIO no conicide con el formato seleccionado", "patron" => "[a-zA-Z0-9 ]{4,20}"],
+            "administrador_clave" => ["mensaje" => "Su PASSWORD no conicide con el formato seleccionado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"]
+        ];
 
-        if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $admin_password)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Su PASSWORD no conicide con el formato seleccionado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
+        foreach ($verificaciones as $campo => $info) {
+            if ($this->verificarDatos($info["patron"], $_POST[$campo])) {
+                return json_encode(["tipo" => "simple", "titulo" => "Ocurrió un error inesperado", "text" => $info["mensaje"], "icono" => "error"]);
+            }
         }
 
         $check_admin = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_usuario = '$admin_usuario' AND usuario_id = '" . $_SESSION['id'] . "'");
         if ($check_admin->rowCount() == 1) {
             $check_admin = $check_admin->fetch();
-            if ($check_admin['usuario_usuario'] != $admin_usuario || !password_verify($admin_password, $check_admin['usuario_clave'])) {
-                $alerta = [
-                    "tipo" => "simple",
-                    "titulo" => "Ocurrió un error inesperado",
-                    "text" => "Usuario o Password Administrador Incorrectos",
-                    "icono" => "error"
-                ];
-                return json_encode($alerta);
-                exit();
+            if ($check_admin['usuario_usuario'] != $admin_usuario || $check_admin['usuario_clave'] != $admin_password) {
+                return json_encode($alertas["session_invalido"]);
             }
         } else {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Usuario o Password Incorrectos",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
+            return json_encode($alertas["session_invalido"]);
         }
 
-        $nombre = $this->limpiarCadena($_POST['usuario_nombre']);
-        $apellido = $this->limpiarCadena($_POST['usuario_apellido']);
-        $usuario = $this->limpiarCadena($_POST['usuario_usuario']);
-        $email = $this->limpiarCadena($_POST['usuario_email']);
-        $clave1 = $this->limpiarCadena($_POST['usuario_clave_1']);
-        $clave2 = $this->limpiarCadena($_POST['usuario_clave_2']);
-
-        //Verificando campos obligatorios
-        if ($nombre == "" || $apellido == "" || $usuario == "") {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "Existen campos vacios",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        //Verificando integridad de los datos
-        if ($this->verificarDatos("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}", $nombre)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "El nombre no coincide con el formato solicitado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($this->verificarDatos("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}", $apellido)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "El apellido no coincide con el formato solicitado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $usuario)) {
-            $alerta = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "text" => "El usuario no coincide con el formato solicitado",
-                "icono" => "error"
-            ];
-            return json_encode($alerta);
-            exit();
-        }
-
-        if ($email != "" && $datos['usuario_email'] != $email) {
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email ='$email'");
-                if ($check_email->rowCount() > 0) {
-                    $alerta = [
-                        "tipo" => "simple",
-                        "titulo" => "Ocurrió un error inesperado",
-                        "text" => "El correo ingresado ya se encuentra registrado",
-                        "icono" => "error"
-                    ];
-                    return json_encode($alerta);
-                    exit();
-                }
-            } else {
-                $alerta = [
-                    "tipo" => "simple",
-                    "titulo" => "Ocurrió un error inesperado",
-                    "text" => "Ha ingresado un email no valido",
-                    "icono" => "error"
-                ];
-                return json_encode($alerta);
-                exit();
+        $campos_obligatorios = ['usuario_nombre', 'usuario_apellido', 'usuario_usuario'];
+        foreach ($campos_obligatorios as $campo) {
+            if (empty($_POST[$campo])) {
+                return json_encode($alertas["campos_vacios"]);
             }
         }
 
-        if ($clave1 != "" || $clave2 != "") {
-            if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $clave1) || $this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $clave2)) {
+        if ($_POST['usuario_email'] != "" && $datos['usuario_email'] != $_POST['usuario_email']) {
+            if (filter_var($_POST['usuario_email'], FILTER_VALIDATE_EMAIL)) {
+                $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email ='{$_POST['usuario_email']}'");
+                if ($check_email->rowCount() > 0) {
+                    return json_encode($alertas["email_existente"]);
+                }
+            } else {
+                return json_encode($alertas["email_invalido"]);
+            }
+        }
+
+        if ($_POST['usuario_clave_1'] != "" || $_POST['usuario_clave_2'] != "") {
+            if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $_POST['usuario_clave_1']) || $this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $_POST['usuario_clave_2'])) {
                 $alerta = [
                     "tipo" => "simple",
                     "titulo" => "Ocurrió un error inesperado",
@@ -531,7 +449,7 @@ class userController extends mainModel
                 return json_encode($alerta);
                 exit();
             } else {
-                if ($clave1 != $clave2) {
+                if ($_POST['usuario_clave_1'] != $_POST['usuario_clave_2']) {
                     $alerta = [
                         "tipo" => "simple",
                         "titulo" => "Ocurrió un error inesperado",
@@ -541,15 +459,15 @@ class userController extends mainModel
                     return json_encode($alerta);
                     exit();
                 } else {
-                    $clave = password_hash($clave1, PASSWORD_BCRYPT, ["cost" => 10]);
+                    $clave = $_POST['usuario_clave_1'];
                 }
             }
         } else {
             $clave = $datos['usuario_clave'];
         }
 
-        if ($datos['usuario_usuario'] != $usuario) {
-            $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario ='$usuario'");
+        if ($datos['usuario_usuario'] != $_POST['usuario_usuario']) {
+            $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario ='{$_POST['usuario_usuario']}) {'");
             if ($check_usuario->rowCount() > 0) {
                 $alerta = [
                     "tipo" => "simple",
@@ -566,22 +484,22 @@ class userController extends mainModel
             [
                 "campo_nombre" => "usuario_nombre",
                 "campo_marcador" => ":Nombre",
-                "campo_valor" => $nombre
+                "campo_valor" => $_POST['usuario_nombre']
             ],
             [
                 "campo_nombre" => "usuario_apellido",
                 "campo_marcador" => ":Apellido",
-                "campo_valor" => $apellido
+                "campo_valor" => $_POST['usuario_apellido']
             ],
             [
                 "campo_nombre" => "usuario_email",
                 "campo_marcador" => ":Email",
-                "campo_valor" => $email
+                "campo_valor" => $_POST['usuario_email']
             ],
             [
                 "campo_nombre" => "usuario_usuario",
                 "campo_marcador" => ":Usuario",
-                "campo_valor" => $usuario
+                "campo_valor" => $_POST['usuario_usuario']
             ],
             [
                 "campo_nombre" => "usuario_clave",
@@ -593,6 +511,7 @@ class userController extends mainModel
                 "campo_marcador" => ":Actualizado",
                 "campo_valor" => date("Y-m-d H:i:s")
             ]
+            // Agregar otros campos aquí...
         ];
 
         $condicion = [
@@ -603,9 +522,9 @@ class userController extends mainModel
 
         if ($this->actualizarDatos("usuario", $usuario_datos_up, $condicion)) {
             if ($id == $_SESSION['id']) {
-                $_SESSION['nombre'] = $nombre;
-                $_SESSION['apellido'] = $apellido;
-                $_SESSION['usuario'] = $usuario;
+                $_SESSION['nombre'] = $_POST['usuario_nombre'];
+                $_SESSION['apellido'] = $_POST['usuario_apellido'];
+                $_SESSION['usuario'] = $_POST['usuario_usuario'];
             }
             $alerta = [
                 "tipo" => "recargar",

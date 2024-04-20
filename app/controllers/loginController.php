@@ -6,22 +6,25 @@ use app\models\mainModel;
 
 class loginController extends mainModel
 {
-    private $data;
-
+    /*private $data;
 
     public function __construct()
     {
-        $request = (object) $_REQUEST;
-        /**
-         * controlador
-         */
+        $requestBody = file_get_contents('php://input');
+        $requestBody = json_decode($requestBody);
+
+        $request =  ($requestBody) ?? (object) $_REQUEST;
+        //print_r($request);
+        //controlador         
         $this->swicht_usuario($request);
     }
 
     private function swicht_usuario($request)
     {
+        //print_r($request);
         switch ($request->modulo_usuario) {
             case 'login':
+                //print_r($request);
                 $request = self::iniciarSesionControlador_api($request);
                 echo json_encode($request);
                 break;
@@ -34,13 +37,15 @@ class loginController extends mainModel
     {
         $request->resp = (bool) true;
 
-        if ($request->login_usuario == "" || $request->login_password == "") $request->resp = 'vacio';
-        if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $request->login_usuario)) $request->resp = 'usaurio_invalido';
+        if ($request->login_usuario === "" || $request->login_password === "") return (object) ['resp' => 'vacio'];
+        if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $request->login_usuario)) return (object) ['resp' => 'usuario_invalido'];
+
         return $request;
     }
 
     public function iniciarSesionControlador_api($request)
     {
+
         $request = $this->validacion_usuario($request);
 
         if ($request->resp === true) {
@@ -65,19 +70,15 @@ class loginController extends mainModel
         }
 
         return $request;
-    }
+    }*/
 
-    #Controllador iniciar session
-
-    /**
-     * 
-     */
+    /*----------  Controlador iniciar sesion  ----------*/
     public function iniciarSesionControlador()
     {
         $usuario = $this->limpiarCadena($_POST['login_usuario']);
         $password = $this->limpiarCadena($_POST['login_password']);
 
-        if ($usuario == "" && $password == "") {
+        if ($usuario == "" || $password == "") {
             echo "
                 <script>
                     Swal.fire({
@@ -89,6 +90,7 @@ class loginController extends mainModel
                 </script>
             ";
         } else {
+            # Verificando integridad de los datos #
             if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $usuario)) {
                 echo "
                     <script>
@@ -101,6 +103,7 @@ class loginController extends mainModel
                     </script>
                 ";
             } else {
+                # Verificando integridad de los datos #
                 if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $password)) {
                     echo "
                         <script>
@@ -113,11 +116,12 @@ class loginController extends mainModel
                         </script>
                     ";
                 } else {
+                    # Verificando usuario #
                     $check_usuario = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_usuario ='$usuario'");
                     if ($check_usuario->rowCount() == 1) {
                         $check_usuario = $check_usuario->fetch();
 
-                        if ($check_usuario['usuario_usuario'] == $usuario && password_verify($password, $check_usuario['usuario_clave'])) {
+                        if ($check_usuario['usuario_usuario'] == $usuario && $check_usuario['usuario_clave'] == $password) {
                             $_SESSION['id'] = $check_usuario['usuario_id'];
                             $_SESSION['nombre'] = $check_usuario['usuario_nombre'];
                             $_SESSION['apellido'] = $check_usuario['usuario_apellido'];
@@ -160,11 +164,8 @@ class loginController extends mainModel
             }
         }
     }
-    /** */
 
-
-
-
+    /*----------  Controlador cerrar sesion  ----------*/
     public function cerrarSesionControlador()
     {
         session_destroy();
@@ -180,5 +181,3 @@ class loginController extends mainModel
         }
     }
 }
-
-$testing = new loginController();

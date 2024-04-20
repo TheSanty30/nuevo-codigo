@@ -138,7 +138,7 @@ class mainModel
             $sql->bindParam($clave["campo_marcador"], $clave["campo_valor"]);
         }
 
-        $sql->bindParam($condicion["condicion_marcador"], $clave["condicion_valor"]);
+        $sql->bindParam($condicion["condicion_marcador"], $condicion["condicion_valor"]);
 
         $sql->execute();
 

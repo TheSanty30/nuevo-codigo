@@ -6,20 +6,24 @@ require_once "../../autoload.php";
 
 use app\controllers\userController;
 
-if (isset($_POST['modulo_usuario'])) {
+$request = (object)$_REQUEST;
+
+if (isset($request->modulo_usuario)) {
     $insUsuario = new userController();
 
-    if ($_POST['modulo_usuario'] == "registrar") {
-        echo $insUsuario->registrarUsuarioControlador();
-    }
-    if ($_POST['modulo_usuario'] == "eliminar") {
-        echo $insUsuario->eliminarUsuarioControlador();
-    }
-    if ($_POST['modulo_usuario'] == "actualizar") {
-        echo $insUsuario->actualizarUsuarioControlador();
-    }
-    if ($_POST['modulo_usuario'] == "login") {
-        echo $insLogin->iniciarSesionControlador();
+    switch ($request->modulo_usuario) {
+        case "registrar":
+            echo $insUsuario->registrarUsuarioControlador();
+            break;
+        case "eliminar":
+            echo $insUsuario->eliminarUsuarioControlador();
+            break;
+        case "actualizar":
+            echo $insUsuario->actualizarUsuarioControlador();
+            break;
+        default:
+            // Acción por defecto si no se encuentra ninguna coincidencia
+            break;
     }
 } else {
     session_destroy();
