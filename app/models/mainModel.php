@@ -147,13 +147,15 @@ class mainModel
 
     protected function eliminarDatos($tabla, $campo, $id)
     {
-        $sql = $this->conectar()->prepare("DELETE FROM $tabla WHERE $campo = :ID");
-
+        $sql = $this->conectar()->prepare("UPDATE $tabla SET usuario_status = 'inhabilitado', usuario_eliminado = {date('Y-m-d H:i:s')}, accion_eliminado = '{$_SESSION['nombre']}' WHERE $campo = :ID");
+        //print_r($sql);
         $sql->bindParam(":ID", $id);
 
         $sql->execute();
 
         return $sql;
+
+        //"DELETE FROM $tabla WHERE $campo = :ID"
     }
 
     protected function paginadorTablas($pagina, $numeroPaginas, $url, $botones)

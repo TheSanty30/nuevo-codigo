@@ -33,7 +33,6 @@ if (isset($_GET['views'])) {
     if ($vista == "login" || $vista == "404") {
         require_once "./app/views/content/" . $vista . "-view.php";
     } else {
-        /*---------- Cerrando sesion ----------*/
         if (!isset($_SESSION['id']) || !isset($_SESSION['nombre']) || !isset($_SESSION['usuario']) || $_SESSION['id'] == "" || $_SESSION['nombre'] == "" || $_SESSION['usuario'] == "") {
             $insLogin->cerrarSesionControlador();
             exit();

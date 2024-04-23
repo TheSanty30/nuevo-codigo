@@ -25,3 +25,13 @@
 
 <!-- JavaScript de Bootstrap 5 (Requiere Popper.js) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<!-- Jquery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<!-- reCaptcha -->
+<script src="https://www.google.com/recaptcha/api.js?render=<?php echo RECAPTCHA_PUBLIC_KEY_V2; ?>"></script>
+
+<!-- reCaptcha 
+<script src="https://www.google.com/recaptcha/api.js?render=<?php //echo RECAPTCHA_PUBLIC_KEY; 
+                                                            ?>"></script>-->

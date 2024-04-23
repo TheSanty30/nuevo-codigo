@@ -13,7 +13,7 @@ if (isset($request->modulo_usuario)) {
 
     switch ($request->modulo_usuario) {
         case "registrar":
-            echo $insUsuario->registrarUsuarioControlador();
+            echo $insUsuario->registrarUsuarioControlador($request);
             break;
         case "eliminar":
             echo $insUsuario->eliminarUsuarioControlador();

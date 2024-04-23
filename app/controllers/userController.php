@@ -7,8 +7,11 @@ use app\models\mainModel;
 class userController extends mainModel
 {
 
+    public function __construct()
+    {
+    }
     /*----------  Controlador registrar usuario  ----------*/
-    public function registrarUsuarioControlador()
+    public function registrarUsuarioControlador($request)
     {
         $alertas = [
             "campos_vacios" => [
@@ -45,48 +48,48 @@ class userController extends mainModel
         ];
 
         // Verificar campos vacíos
-        $campos_obligatorios = ['usuario_nombre', 'usuario_apellido', 'usuario_usuario', 'usuario_clave_1', 'usuario_clave_2'];
+        $campos_obligatorios = [$request->usuario_nombre, $request->usuario_apellido, $request->usuario_usuario, $request->usuario_clave_1, $request->usuario_clave_2];
         foreach ($campos_obligatorios as $campo) {
-            if (empty($_POST[$campo])) {
+            if (empty($campo)) {
                 return json_encode($alertas["campos_vacios"]);
             }
         }
 
         // Verificar datos
         $verificaciones = [
-            "usuario_nombre" => ["mensaje" => "El nombre no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
-            "usuario_apellido" => ["mensaje" => "El apellido no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
-            "usuario_usuario" => ["mensaje" => "El usuario no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9]{4,20}"],
-            "usuario_clave_1" => ["mensaje" => "Las claves no coinciden con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"],
-            "usuario_clave_2" => ["mensaje" => "Las claves no coinciden con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"]
+            $request->usuario_nombre => ["mensaje" => "El NOMBRE no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            $request->usuario_apellido => ["mensaje" => "El APELLIDO no coincide con el formato solicitado", "patron" => "[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,40}"],
+            $request->usuario_usuario => ["mensaje" => "El USUARIO no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9]{4,20}"],
+            $request->usuario_clave_1 => ["mensaje" => "La CONTRASEÑA no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"],
+            $request->usuario_clave_2 => ["mensaje" => "La CONTRASEÑA no coincide con el formato solicitado", "patron" => "[a-zA-Z0-9$@.-]{7,100}"]
         ];
 
         foreach ($verificaciones as $campo => $info) {
-            if ($this->verificarDatos($info["patron"], $_POST[$campo])) {
+            if ($this->verificarDatos($info["patron"], $campo)) {
                 return json_encode(["tipo" => "simple", "titulo" => "Ocurrió un error inesperado", "text" => $info["mensaje"], "icono" => "error"]);
             }
         }
 
         // Verificar email
-        if (!empty($_POST['usuario_email'])) {
-            if (!filter_var($_POST['usuario_email'], FILTER_VALIDATE_EMAIL)) {
+        if (!empty($request->usuario_email)) {
+            if (!filter_var($request->usuario_email, FILTER_VALIDATE_EMAIL)) {
                 return json_encode($alertas["email_invalido"]);
             }
-            $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email = '{$_POST['usuario_email']}'");
+            $check_email = $this->ejecutarConsulta("SELECT usuario_email FROM usuario WHERE usuario_email = '{$request->usuario_email}'");
             if ($check_email->rowCount() > 0) {
                 return json_encode($alertas["email_existente"]);
             }
         }
 
         // Verificar claves
-        if ($_POST['usuario_clave_1'] != $_POST['usuario_clave_2']) {
+        if ($request->usuario_clave_1 != $request->usuario_clave_2) {
             return json_encode($alertas["claves_diferentes"]);
         } else {
-            $clave = $_POST['usuario_clave_1'];
+            $clave = $request->usuario_clave_1;
         }
 
         // Verificar usuario
-        $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario = '{$_POST['usuario_email']}'");
+        $check_usuario = $this->ejecutarConsulta("SELECT usuario_usuario FROM usuario WHERE usuario_usuario = '{$request->usuario_usuario}'");
         if ($check_usuario->rowCount() > 0) {
             return json_encode($alertas["usuario_existente"]);
         }
@@ -96,22 +99,22 @@ class userController extends mainModel
             [
                 "campo_nombre" => "usuario_nombre",
                 "campo_marcador" => ":Nombre",
-                "campo_valor" => $_POST['usuario_nombre']
+                "campo_valor" => $request->usuario_nombre
             ],
             [
                 "campo_nombre" => "usuario_apellido",
                 "campo_marcador" => ":Apellido",
-                "campo_valor" => $_POST['usuario_apellido']
+                "campo_valor" => $request->usuario_apellido
             ],
             [
                 "campo_nombre" => "usuario_email",
                 "campo_marcador" => ":Email",
-                "campo_valor" => $_POST['usuario_email']
+                "campo_valor" => $request->usuario_email
             ],
             [
                 "campo_nombre" => "usuario_usuario",
                 "campo_marcador" => ":Usuario",
-                "campo_valor" => $_POST['usuario_usuario']
+                "campo_valor" => $request->usuario_usuario
             ],
             [
                 "campo_nombre" => "usuario_clave",
@@ -127,6 +130,11 @@ class userController extends mainModel
                 "campo_nombre" => "usuario_actualizado",
                 "campo_marcador" => ":Actualizado",
                 "campo_valor" => date("Y-m-d H:i:s")
+            ],
+            [
+                "campo_nombre" => "usuario_status",
+                "campo_marcador" => ":Status",
+                "campo_valor" => "Habilitado"
             ]
             // Agregar otros campos aquí...
         ];
@@ -138,6 +146,8 @@ class userController extends mainModel
         } else {
             return json_encode(["tipo" => "simple", "titulo" => "Ocurrió un error inesperado", "text" => "No se pudo registrar el usuario, por favor inténtelo nuevamente", "icono" => "error"]);
         }
+
+        return $request;
     }
 
 
@@ -186,6 +196,9 @@ class userController extends mainModel
                                 <th class="text-center">Email</th>
                                 <th class="text-center">Creado</th>
                                 <th class="text-center">Actualizado</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Eliminado</th>
+                                <th class="text-center">Eliminado por</th>
                                 <th class="text-center" colspan="3">Opciones</th>
                             </tr>
                         </thead>
@@ -210,7 +223,11 @@ class userController extends mainModel
                     <td>
                         ' . date("d-m-Y h:i:s A", strtotime($rows['usuario_actualizado'])) . '
                     </td>
-
+                    <td>' . $rows['usuario_status'] . '</td>
+                    <td>
+                        ' . date("d-m-Y h:i:s A", strtotime($rows['usuario_eliminado'])) . '
+                    </td>
+                    <td>' . $rows['accion_eliminado'] . '</td>
                     <td>
                         <a href="' . APP_URL . 'userUpdate/' . $rows['usuario_id'] . '" class="btn btn-success btn-sm rounded-pill">Actualizar</a>
                     </td>

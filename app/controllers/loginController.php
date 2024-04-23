@@ -78,6 +78,30 @@ class loginController extends mainModel
         $usuario = $this->limpiarCadena($_POST['login_usuario']);
         $password = $this->limpiarCadena($_POST['login_password']);
 
+        $token = $this->limpiarCadena($_POST['token']);
+
+        include "../../config/app.php";
+        $url = 'https://wwww.google.com/recaptcha/api/siteverify';
+
+        $ruta = file_get_contents($url . '?secret=' . RECAPTCHA_PUBLIC_KEY . '&response=' . $token);
+
+        $json = json_decode($ruta, true);
+        $ok = $json['success'];
+
+        if (!$ok) {
+            echo "
+                <script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ocur   un error inesperado',
+                        text: 'El token no es valido',
+                        confirmButtonText: 'Aceptar'
+                    })
+                </script>
+            ";
+            exit();
+        }
+
         if ($usuario == "" || $password == "") {
             echo "
                 <script>
