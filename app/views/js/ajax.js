@@ -78,6 +78,51 @@ function alertas_ajax(alerta) {
     }
 }
 
+const login_form = document.querySelector(".frmLogin");
+
+login_form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    let data = new FormData(this);
+    let method = this.getAttribute("method");
+    let action = this.getAttribute("action");
+
+    let config = {
+        method: method,
+        body: data
+    };
+
+    fetch(action, config)
+        .then(respuesta => respuesta.json())
+        .then(respuesta => {
+            switch (respuesta.success) {
+            case true:
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: respuesta.message,
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    if (respuesta.redirect) {
+                        window.location.href = respuesta.redirect;
+                    }
+                });
+                break;
+            case false:
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: respuesta.message,
+                    confirmButtonText: 'Aceptar'
+                });
+                break;
+            default:
+                // Manejar otro caso si es necesario
+                break;
+        }
+        });
+});
+
+
 /*let btn_exit = document.getElementById("btn_exit");
 
 btn_exit.addEventListener("click", function(e){

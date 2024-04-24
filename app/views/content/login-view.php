@@ -1,7 +1,8 @@
 <div class="login-container">
     <div class="login-form">
         <h2 class="text-center mb-4">Iniciar Sesión</h2>
-        <form id="login-form" action="validar.php" method="post" autocomplete="off">
+        <form class="frmLogin" action="<?php echo APP_URL; ?>app/ajax/loginAjax.php" method="post" autocomplete="off">
+            <input type="hidden" name="modulo_usuario" value="login">
             <div class="form-group">
                 <label for="username">Usuario:</label>
                 <input type="text" class="form-control" name="login_usuario" id="username" maxlength="20" placeholder="Ingrese su usuario">
@@ -10,40 +11,14 @@
                 <label for="password">Contraseña:</label>
                 <input type="password" class="form-control" name="login_password" maxlength="100" id="password" placeholder="Ingrese su contraseña">
             </div>
-            <input type="hidden" name="token">
-            <button type="button" id="entrar" class="btn btn-primary btn-block">Iniciar Sesión</button>
+
+            <div class="g-recaptcha d-flex justify-content-center form-control mb-3" data-sitekey="<?= RECAPTCHA_PUBLIC_KEY_V2 ?>"></div>
+
+            <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
         </form>
     </div>
 </div>
 
-<script>
-    /*
-    $(document).ready(function() {
-
-        $("#entrar").click(function() {
-            grecaptcha.ready(function() {
-                grecaptcha.execute('6Lez2MMpAAAAAAZASuy4rfQFHSo3FeF7SBhorwYA', {
-                    action: 'submit'
-                }).then(function(token) {
-                    $("#login-form").prepend('<input type="hidden" name="token" value="' + token + '">');
-                    $("#login-form").prepend('<input type="hidden" name="action" value="submit">');
-                    $("#login-form").submit();
-
-                })
-            })
-        })
-    })*/
-    $
-    grecaptcha.ready(function() {
-        grecaptcha.execute(<?php echo RECAPTCHA_PUBLIC_KEY_V2; ?>, {
-            action: 'loginForm'
-        }).then(function(respuesta_token) {
-            const itoken = document.getElementById('token');
-            itoken.value = respuesta_token;
-
-        })
-    })
-</script>
 <script>
     /*
     fetch('http://localhost/lev/login.controller.php?modulo_usuario=login&login_usuario=Sany')

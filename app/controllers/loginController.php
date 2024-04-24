@@ -73,121 +73,67 @@ class loginController extends mainModel
     }*/
 
     /*----------  Controlador iniciar sesion  ----------*/
-    public function iniciarSesionControlador()
+    public function iniciarSesionControlador($request)
     {
-        $usuario = $this->limpiarCadena($_POST['login_usuario']);
-        $password = $this->limpiarCadena($_POST['login_password']);
+        // Obtener datos del formulario
+        $usuario = $this->limpiarCadena($request->login_usuario ?? '');
+        $password = $this->limpiarCadena($request->login_password ?? '');
+        $captcha = $this->limpiarCadena($_POST['g-recaptcha-response'] ?? '');
 
-        $token = $this->limpiarCadena($_POST['token']);
-
-        include "../../config/app.php";
-        $url = 'https://wwww.google.com/recaptcha/api/siteverify';
-
-        $ruta = file_get_contents($url . '?secret=' . RECAPTCHA_PUBLIC_KEY . '&response=' . $token);
-
-        $json = json_decode($ruta, true);
-        $ok = $json['success'];
-
-        if (!$ok) {
-            echo "
-                <script>
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Ocur   un error inesperado',
-                        text: 'El token no es valido',
-                        confirmButtonText: 'Aceptar'
-                    })
-                </script>
-            ";
-            exit();
+        // Verificar si hay campos vacíos
+        if (empty($usuario) || empty($password)) {
+            return json_encode([
+                'success' => false,
+                'message' => 'Existen campos vacíos'
+            ]);
         }
 
-        if ($usuario == "" || $password == "") {
-            echo "
-                <script>
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Ocurrió un error inesperado',
-                        text: 'Existen campos vacios',
-                        confirmButtonText: 'Aceptar'
-                    })
-                </script>
-            ";
-        } else {
-            # Verificando integridad de los datos #
-            if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $usuario)) {
-                echo "
-                    <script>
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Ocurrió un error inesperado',
-                            text: 'El usuario no coinicide con el formato solicitado',
-                            confirmButtonText: 'Aceptar'
-                        })
-                    </script>
-                ";
-            } else {
-                # Verificando integridad de los datos #
-                if ($this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $password)) {
-                    echo "
-                        <script>
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Ocurrió un error inesperado',
-                                text: 'La contraseña no coinicide con el formato solicitado',
-                                confirmButtonText: 'Aceptar'
-                            })
-                        </script>
-                    ";
-                } else {
-                    # Verificando usuario #
-                    $check_usuario = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_usuario ='$usuario'");
-                    if ($check_usuario->rowCount() == 1) {
-                        $check_usuario = $check_usuario->fetch();
+        // Verificar el formato del usuario y la contraseña
+        if ($this->verificarDatos("[a-zA-Z0-9]{4,20}", $usuario) || $this->verificarDatos("[a-zA-Z0-9$@.-]{7,100}", $password)) {
+            return json_encode([
+                'success' => false,
+                'message' => 'El usuario o la contraseña no coinciden con el formato solicitado'
+            ]);
+        }
 
-                        if ($check_usuario['usuario_usuario'] == $usuario && $check_usuario['usuario_clave'] == $password) {
-                            $_SESSION['id'] = $check_usuario['usuario_id'];
-                            $_SESSION['nombre'] = $check_usuario['usuario_nombre'];
-                            $_SESSION['apellido'] = $check_usuario['usuario_apellido'];
-                            $_SESSION['usuario'] = $check_usuario['usuario_usuario'];
+        // Verificar Captcha
+        $ip = $_SERVER['REMOTE_ADDR'];
+        $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=" . RECAPTCHA_PRIVATE_KEY_V2 . "&response=$captcha&remoteip=$ip");
+        $atributos = json_decode($response, true);
 
-                            if (headers_sent()) {
-                                echo "
-                                    <script>
-                                        window.location.href='" . APP_URL . "dashboard/'
-                                    </script>
-                                ";
-                            } else {
-                                header("Location: " . APP_URL . "dashboard/");
-                            }
-                        } else {
-                            echo "
-                                <script>
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Ocurrió un error inesperado',
-                                        text: 'Usuario o clave incorrecto',
-                                        confirmButtonText: 'Aceptar'
-                                    })
-                                </script>
-                            ";
-                        }
-                    } else {
-                        echo "
-                            <script>
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Ocurrió un error inesperado',
-                                    text: 'Usuario o clave incorrecto',
-                                    confirmButtonText: 'Aceptar'
-                                })
-                            </script>
-                        ";
-                    }
-                }
+        if (!$atributos['success']) {
+            return json_encode([
+                'success' => false,
+                'message' => 'Error en el Captcha'
+            ]);
+        }
+
+        // Verificar usuario
+        $check_usuario = $this->ejecutarConsulta("SELECT * FROM usuario WHERE usuario_usuario ='$usuario'");
+        if ($check_usuario->rowCount() == 1) {
+            $check_usuario = $check_usuario->fetch();
+
+            if ($check_usuario['usuario_clave'] == $password) {
+                // Iniciar sesión
+                $_SESSION['id'] = $check_usuario['usuario_id'];
+                $_SESSION['nombre'] = $check_usuario['usuario_nombre'];
+                $_SESSION['apellido'] = $check_usuario['usuario_apellido'];
+                $_SESSION['usuario'] = $check_usuario['usuario_usuario'];
+
+                return json_encode([
+                    'success' => true,
+                    'redirect' => APP_URL . "dashboard/"
+                ]);
             }
         }
+
+        return json_encode([
+            'success' => false,
+            'message' => 'Usuario o contraseña incorrectos'
+        ]);
     }
+
+
 
     /*----------  Controlador cerrar sesion  ----------*/
     public function cerrarSesionControlador()
@@ -197,11 +143,11 @@ class loginController extends mainModel
         if (headers_sent()) {
             echo "
                 <script>
-                    window.location.href='" . APP_URL . "login/'
+                    window.location.href='" . APP_URL . "'
                 </script>
             ";
         } else {
-            header("Location: " . APP_URL . "login/");
+            header("Location: " . APP_URL);
         }
     }
 }

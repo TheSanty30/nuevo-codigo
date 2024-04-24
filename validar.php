@@ -18,7 +18,8 @@ $datos = json_decode($response, true);
 //print_r($datos);
 
 if ($datos['success'] == 1 && $datos['score'] > 0.5) {
-    echo 'CAPTCHA_OK';
+    if ($action['action'] == 'submit') {
+    }
 } else {
     echo 'CAPTCHA_ERROR';
 }

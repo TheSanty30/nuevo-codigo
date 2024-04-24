@@ -30,8 +30,4 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
 <!-- reCaptcha -->
-<script src="https://www.google.com/recaptcha/api.js?render=<?php echo RECAPTCHA_PUBLIC_KEY_V2; ?>"></script>
-
-<!-- reCaptcha 
-<script src="https://www.google.com/recaptcha/api.js?render=<?php //echo RECAPTCHA_PUBLIC_KEY; 
-                                                            ?>"></script>-->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
